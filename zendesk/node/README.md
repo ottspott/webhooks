@@ -49,4 +49,4 @@ your url is: https://mysubdomain.localtunnel.me
 ```
 - Now set this URL to the Webhook of your choice in Ottspott under the `Number management`
   section : `https://mysubdomain.localtunnel.me/webhook/ottspott?domain=zendeskdomain&accessToken=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
-  (those parameters can be easily retrived from your Zendesk integration in Ottspott)
+  (those parameters can be easily retrieved from your Zendesk integration in Ottspott)
