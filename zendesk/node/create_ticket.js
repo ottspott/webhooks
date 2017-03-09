@@ -20,16 +20,16 @@ app.post("/webhook/ottspott", function(request, response) {
     return;
   }
 
-	if (typeof request.query.accessToken === "undefined" || request.query.domain === "undefined"){
+  if (typeof request.query.accessToken === "undefined" || request.query.domain === "undefined"){
     console.log("accessToken or Zendesk domain undefined, query : " + JSON.stringify(request.query));
     response.json({ok: false});
     return;
-	}
+  }
 
-	var zendesk_credentials = {
-		domain : request.query.domain,
-		accessToken: request.query.accessToken
-	}
+  var zendesk_credentials = {
+    domain : request.query.domain,
+    accessToken: request.query.accessToken
+  }
 
   var user = {};
   var subject = "";
@@ -37,13 +37,13 @@ app.post("/webhook/ottspott", function(request, response) {
   var body = "";
 
   switch (request.body.event){
-		case 'new_incoming_call':
+    case 'new_incoming_call':
       subject = "Incoming call started";
-			user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
+      user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
       requester = buildZendeskRequester(user, request.body.caller_id_name, request.body.caller_id_number);
       body = "Call has just started";
-			break;
-		case 'incoming_call_answered':
+      break;
+    case 'incoming_call_answered':
       subject = "Incoming call answered";
       user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
       requester = buildZendeskRequester(user, request.body.caller_id_name, request.body.caller_id_number);
@@ -54,36 +54,36 @@ app.post("/webhook/ottspott", function(request, response) {
       user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
       requester = buildZendeskRequester(user, request.body.caller_id_name, request.body.caller_id_number);
       body = "Call has been left unanswered";
-			break;
-		case 'incoming_call_ended_and_answered':
+      break;
+    case 'incoming_call_ended_and_answered':
       subject = "Incoming call ended";
-			user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
+      user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
       requester = buildZendeskRequester(user, request.body.caller_id_name, request.body.caller_id_number);
       body = request.body.detailed_status + " (duration : " + niceDuration(request.body.duration) + ")";
-			break;
-		case 'new_outgoing_call':
+      break;
+    case 'new_outgoing_call':
       subject = "Outgoing call started";
-			user = searchUserByPhone(zendesk_credentials, request.body.destination_number);
+      user = searchUserByPhone(zendesk_credentials, request.body.destination_number);
       requester = buildZendeskRequester(user, request.body.callee_id_name, request.body.destination_number);
       body = "Call has just started";
-			break;
-		case 'outgoing_call_ended':
+      break;
+    case 'outgoing_call_ended':
       subject = "Outgoing call ended";
-			user = searchUserByPhone(zendesk_credentials, request.body.destination_number);
+      user = searchUserByPhone(zendesk_credentials, request.body.destination_number);
       requester = buildZendeskRequester(user, request.body.callee_id_name, request.body.destination_number);
       body = request.body.detailed_status + " (duration : " + niceDuration(request.body.duration) + ")";
-			break;
-		case 'incoming_call_ended_and_voicemail_left':
+      break;
+    case 'incoming_call_ended_and_voicemail_left':
       subject = "Received Voicemail";
-			user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
+      user = searchUserByPhone(zendesk_credentials, request.body.caller_id_number);
       requester = buildZendeskRequester(user, request.body.callee_id_name, request.body.destination_number);
       body = "Voicemail has just been left";
-			break;
-		case 'sms_received':
-			break;
-		case 'sms_sent':
-			break;
-	}
+      break;
+    case 'sms_received':
+      break;
+    case 'sms_sent':
+      break;
+  }
 
   var url = "https://" +  zendesk_credentials.domain + ".zendesk.com/api/v2/tickets.json";
 
@@ -141,30 +141,30 @@ app.listen(4443, function () {
  * @return {Object}
  */
 function searchUserByPhone(zendesk_credentials, phoneNumber){
-	var url = "https://" +  zendesk_credentials.domain + ".zendesk.com/api/v2/search.json?";
+  var url = "https://" +  zendesk_credentials.domain + ".zendesk.com/api/v2/search.json?";
 
-	var options = {
-		uri: url,
-		qs: {
-			query: "type:user phone:" + phoneNumber
-		},
-		headers: {
-			"Authorization": "Bearer " + zendesk_credentials.accessToken,
-			"Content-type" : "application/json",
-			"Accept": "application/json"
-		},
-		json: true
-	};
+  var options = {
+    uri: url,
+    qs: {
+      query: "type:user phone:" + phoneNumber
+    },
+    headers: {
+      "Authorization": "Bearer " + zendesk_credentials.accessToken,
+      "Content-type" : "application/json",
+      "Accept": "application/json"
+    },
+    json: true
+  };
 
-	rp(options)
-		.then(function (response) {
-			console.log("Queried Zendesk : " + JSON.stringify(response));
-			return response.results[0];
-		})
-	.catch(function (error) {
+  rp(options)
+    .then(function (response) {
+      console.log("Queried Zendesk : " + JSON.stringify(response));
+      return response.results[0];
+    })
+  .catch(function (error) {
     console.log("Queried Zendesk, got error : " + JSON.stringify(error));
-		return {};
-	});
+    return {};
+  });
 }
 
 /**
