@@ -41,6 +41,8 @@ npm install --save express
 npm install --save body-parser
 npm install --save request-promise
 node create_ticket.js
+App listening on port 4443
+
 ```
 - In another terminal, start localtunnel, e.g.
 ```
@@ -48,5 +50,7 @@ lt --port 4443 --subdomain mysubdomain
 your url is: https://mysubdomain.localtunnel.me
 ```
 - Now set this URL to the Webhook of your choice in Ottspott under the `Number management`
-  section : `https://mysubdomain.localtunnel.me/webhook/ottspott?domain=zendeskdomain&accessToken=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
-  (those parameters can be easily retrived from your Zendesk integration in Ottspott)
+  section (those parameters can be easily retrieved from your Zendesk integration in Ottspott) :
+```
+https://mysubdomain.localtunnel.me/webhook/ottspott?domain=zendeskdomain&accessToken=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
