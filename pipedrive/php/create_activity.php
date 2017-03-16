@@ -57,86 +57,86 @@ $activity = array(
 
 if (property_exists($obj, 'contact_data') && $obj->contact_data->is_pipedrive_contact == true) {
   // Found Pipedrive contact, set person_id
-  $activity->person_id = $obj->contact_data->pipedrive_person_id;
+  $activity["person_id"] = $obj->contact_data->pipedrive_person_id;
 }
 
 switch($obj->event){
   case "new_incoming_call":
-  $activity->subject = "Incoming call started";
+  $activity["subject"] = "Incoming call started";
 
   if (!property_exists($obj, 'caller_id_name')) {
-    $activity->subject .= " (from : " . $obj->caller_id_number . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
-    $activity->subject .= " (from : " . $obj->caller_id_name . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity->note = "Call has just started";
+  $activity["note"] = "Call has just started";
   break;
   case "incoming_call_answered":
-  $activity->subject = "Incoming call answered";
+  $activity["subject"] = "Incoming call answered";
 
   if (!property_exists($obj, 'caller_id_name')) {
-    $activity->subject .= " (from : " . $obj->caller_id_number . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
-    $activity->subject .= " (from : " . $obj->caller_id_name . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity->note = $obj->detailed_status;
+  $activity["note"] = $obj->detailed_status;
   break;
   case "incoming_call_ended_and_missed":
-  $activity->subject = "Missed call";
+  $activity["subject"] = "Missed call";
 
   if (!property_exists($obj, 'caller_id_name')) {
-    $activity->subject .= " (from : " . $obj->caller_id_number . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
-    $activity->subject .= " (from : " . $obj->caller_id_name . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity->note = "Call has been left unanswered";
+  $activity["note"] = "Call has been left unanswered";
   break;
   case "incoming_call_ended_and_answered":
-  $activity->subject = "Incoming call ended";
+  $activity["subject"] = "Incoming call ended";
 
   if (!property_exists($obj, 'caller_id_name')) {
-    $activity->subject .= " (from : " . $obj->caller_id_number . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
-    $activity->subject .= " (from : " . $obj->caller_id_name . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity->note = $obj->detailed_status . " (duration : " . duration($obj->duration) . ")";
+  $activity["note"] = $obj->detailed_status . " (duration : " . duration($obj->duration) . ")";
   break;
   case "new_outgoing_call":
-  $activity->subject = "Outgoing call started";
+  $activity["subject"] = "Outgoing call started";
 
   if (!property_exists($obj, 'callee_name')) {
-    $activity->subject .= " (to : " . $obj->destinaition_number . ")";
+    $activity["subject"] .= " (to : " . $obj->destinaition_number . ")";
   } else {
-    $activity->subject .= " (to : " . $obj->callee_name . ")";
+    $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
 
-  $activity->note = "Call has just started";
+  $activity["note"] = "Call has just started";
   break;
   case "outgoing_call_ended":
-  $activity->subject = "Outgoing call ended";
+  $activity["subject"] = "Outgoing call ended";
 
   if (!property_exists($obj, 'callee_name')) {
-    $activity->subject .= " (to : " . $obj->destinaition_number . ")";
+    $activity["subject"] .= " (to : " . $obj->destinaition_number . ")";
   } else {
-    $activity->subject .= " (to : " . $obj->callee_name . ")";
+    $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
 
-  $activity->note = $obj->detailed_status . " (duration : " . duration($obj->duration) . ")";
+  $activity["note"] = $obj->detailed_status . " (duration : " . duration($obj->duration) . ")";
   break;
   case "incoming_call_ended_and_voicemail_left":
-  $activity->subject = "Received Voicemail";
+  $activity["subject"] = "Received Voicemail";
 
   if (!property_exists($obj, 'caller_id_name')) {
-    $activity->subject .= " (from : " . $obj->caller_id_number . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
-    $activity->subject .= " (from : " . $obj->caller_id_name . ")";
+    $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity->note = "Voicemail has just been left";
+  $activity["note"] = "Voicemail has just been left";
   break;
 }
 
@@ -159,7 +159,8 @@ $result = json_decode($output, 1);
 // check if an id came back
 if (!empty($result['data']['id'])) {
   $activity_id = $result['data']['id'];
-  $logs .= "Created activity.\n";
+  $logs .= "Created activity : " . json_encode($activity) . "\n";
+  $logs .= "JSON : " . $output . "\n";
   $success = true;
   $response['ok'] = true;
   $response['message'] = "Successfully created activity";
