@@ -19,9 +19,7 @@ on success.
 ## Prerequisites
 
 - Set up your account at Ottspott : https://app.ottspott.co
-- Integrate Zendesk with Ottspott (check the `Integrations` section), this step
-  is not mandatory but it's an easy way to get an Zendesk Access Token to
-  eventually use with your Webhook
+- Integrate Zendesk with Ottspott (check the `Integrations` section)
 
 ## How to test
 
