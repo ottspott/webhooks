@@ -1,5 +1,9 @@
 # Create an activity in Pipedrive when calls are placed or received in Ottspott
 
+## How to use it
+
+Ottspott serves URLs of the form `https://ottspott-webhooks.apidaze.io/pipedrive/create_activity.php?api_token=xxxxxxxxxxxxx&domain=mypipedrivedomain`. Just replace the `api_token` and `domain` parameter values with your personal information in Pipedrive, and attach the URL to the Webhooks of your choice in Ottspott.
+
 ## What it does
 
 Activity creation is triggered by Ottspott phone events :
