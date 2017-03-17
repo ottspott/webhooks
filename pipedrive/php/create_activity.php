@@ -70,10 +70,10 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity["note"] = "Call has just started";
+  $activity["note"] = "<p>Call has just started</p>";
   break;
   case "incoming_call_answered":
-  $activity["subject"] = "Incoming call answered";
+  $activity["subject"] = "<p>Incoming call answered</p>";
 
   if (!property_exists($obj, 'caller_id_name')) {
     $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
@@ -81,7 +81,7 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity["note"] = $obj->detailed_status;
+  $activity["note"] = "<p>" . $obj->detailed_status . "</p>";
   break;
   case "incoming_call_ended_and_missed":
   $activity["subject"] = "Missed call";
@@ -92,7 +92,7 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity["note"] = "Call has been left unanswered";
+  $activity["note"] = "<p>Call has been left unanswered</p>";
   break;
   case "incoming_call_ended_and_answered":
   $activity["subject"] = "Incoming call ended";
@@ -103,7 +103,10 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity["note"] = $obj->detailed_status . " (duration : " . duration($obj->duration) . ")";
+  $activity["note"] =  "<p>" . $obj->detailed_status . " (duration : " . duration($obj->duration) . ")</p>";
+  if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
+	  $activity["note"] .= "<p>Call has been recorded : <a href='" . $obj->recording_url . "'>Recording file</a>";
+  }
   break;
   case "new_outgoing_call":
   $activity["subject"] = "Outgoing call started";
@@ -114,7 +117,7 @@ switch($obj->event){
     $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
 
-  $activity["note"] = "Call has just started";
+  $activity["note"] = "<p>Call has just started</p>";
   break;
   case "outgoing_call_ended":
   $activity["subject"] = "Outgoing call ended";
@@ -125,7 +128,10 @@ switch($obj->event){
     $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
 
-  $activity["note"] = $obj->detailed_status . " (duration : " . duration($obj->duration) . ")";
+  $activity["note"] = "<p>" . $obj->detailed_status . " (duration : " . duration($obj->duration) . ")</p>";
+  if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
+	  $activity["note"] .= "<p>Call has been recorded : <a href='" . $obj->recording_url . "'>Recording file</a>";
+  }
   break;
   case "incoming_call_ended_and_voicemail_left":
   $activity["subject"] = "Received Voicemail";
@@ -136,7 +142,7 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity["note"] = "Voicemail has just been left";
+  $activity["note"] = "<p>Voicemail has just been left</p>";
   break;
 }
 
