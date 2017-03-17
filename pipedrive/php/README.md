@@ -2,7 +2,7 @@
 
 ## How to use it
 
-Ottspott serves URLs of the form `https://ottspott-webhooks.apidaze.io/pipedrive/create_activity.php?apiToken=xxxxxxxxxxxxx&domain=mypipedrivedomain`. Just replace the `api_token` and `domain` parameter values with your personal information in Pipedrive, and attach the URL to the Webhooks of your choice in Ottspott.
+Ottspott serves URLs of the form `https://ottspott-webhooks.apidaze.io/pipedrive/create_activity.php?apiToken=xxxxxxxxxxxxx&domain=mypipedrivedomain`. Just replace the `apiToken` and `domain` parameter values with your personal information in Pipedrive, and attach the URL to the Webhooks of your choice in Ottspott.
 
 ## What it does
 
