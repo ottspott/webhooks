@@ -6,7 +6,7 @@ Ottspott serves URLs of the form `https://ottspott-webhooks.apidaze.io/pipedrive
 
 ## What it does
 
-Activity creation is triggered by Ottspott phone events :
+Activity creation is triggered by the Ottspott phone events listed below :
 - New incoming call started
 - Incoming call answered
 - Incoming call ended and missed
