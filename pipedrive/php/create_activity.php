@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * An Ottspott Webhook that creates an activity in Pipedrive.
+ *
+ * Ottspott will pass as much information as possible, for instance if
+ * your contacts have been imported in Ottspott from Pipedrive and a
+ * contact matches for a the given call that triggers the webhook,
+ * Ottspott will pass a 'pipedrive_person_id' that refers to the contact
+ * object in Pipedrive.
+ */
+
 $date = date('d-m-Y G:i:s');
 
 $success = true;
