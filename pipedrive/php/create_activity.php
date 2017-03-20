@@ -112,7 +112,7 @@ switch($obj->event){
   $activity["subject"] = "Outgoing call started";
 
   if (!property_exists($obj, 'callee_name')) {
-    $activity["subject"] .= " (to : " . $obj->destinaition_number . ")";
+    $activity["subject"] .= " (to : " . $obj->destination_number . ")";
   } else {
     $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
@@ -123,7 +123,7 @@ switch($obj->event){
   $activity["subject"] = "Outgoing call ended";
 
   if (!property_exists($obj, 'callee_name')) {
-    $activity["subject"] .= " (to : " . $obj->destinaition_number . ")";
+    $activity["subject"] .= " (to : " . $obj->destination_number . ")";
   } else {
     $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
