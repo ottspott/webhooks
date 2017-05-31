@@ -153,7 +153,7 @@ sendResponseAndExit($response, $logs);
 function sendResponseAndExit($response, $logs){
   header('Content-Type: application/json');
   echo json_encode($response);
-  $fplogs = fopen('/tmp/log_test_yann.txt', 'a+');
+  $fplogs = fopen('/tmp/log_webhook_notify_in_slack.txt', 'a+');
   fwrite($fplogs, $logs);
   fclose($fplogs);
   exit;
