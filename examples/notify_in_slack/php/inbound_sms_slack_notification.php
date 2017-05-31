@@ -61,7 +61,7 @@ $logs .= "[". $date . " - " . __FILE__ . "] JSON RECEIVED FROM OTTSPOTT :\n";
 $logs .= $json;
 $logs .= "\n";
 
-$fplogs = fopen('/tmp/log_test_yann.txt', 'a+');
+$fplogs = fopen('/tmp/log_webhook_notify_in_slack.txt', 'a+');
 fwrite($fplogs, $logs);
 fclose($fplogs);
 
