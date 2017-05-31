@@ -1,0 +1,1 @@
+This example shows how to send a notification to a given Slack channel when you receive an SMS in Ottspott. You simply need to call the script with a Slack `token` and a `slack_channel_id` to have this working.
