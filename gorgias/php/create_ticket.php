@@ -63,19 +63,19 @@ $subject = "";
 $call_details = "";
 
 switch ($obj->event){
-case "outgoing_call_ended":
-	$subject = "Outgoing call to " . $obj->destination_number;
-	$call_details = "Caller : " . $obj->caller_id_name . " - duration : " . $obj->duration . " seconds";
-	break;
-case "incoming_call_ended_and_missed":
-	$subject = "Missed call from " . $obj->caller_id_number;
-	$call_details = "A call has been missed";
-	break;
-case "incoming_call_ended_and_answered":
-	$subject = "Incoming call terminated from " . $obj->caller_id_number;
-	$call_details = "Answerer : " . $obj->answered_by . " - duration : " . $obj->duration . " seconds";
-	break;
-case "incoming_call_ended_and_voicemail_left":
+  case "outgoing_call_ended":
+  $subject = "Outgoing call to " . $obj->destination_number;
+  $call_details = "Caller : " . $obj->caller_id_name . " - duration : " . $obj->duration . " seconds";
+  break;
+  case "incoming_call_ended_and_missed":
+  $subject = "Missed call from " . $obj->caller_id_number;
+  $call_details = "A call has been missed";
+  break;
+  case "incoming_call_ended_and_answered":
+  $subject = "Incoming call terminated from " . $obj->caller_id_number;
+  $call_details = "Answerer : " . $obj->answered_by . " - duration : " . $obj->duration . " seconds";
+  break;
+  case "incoming_call_ended_and_voicemail_left":
   $subject = "Received Voicemail";
 
   if (!property_exists($obj, 'caller_id_name')) {
@@ -90,51 +90,51 @@ case "incoming_call_ended_and_voicemail_left":
 
 // Build Gorgias ticket data
 $data = array(
-	"subject" => $subject,
-	"sender" => array(
-		"name"=> $gorgias_credentials->requesterName,
-		"email"=> $gorgias_credentials->requesterEmail
-	),
-	"requester" => array(
-		"name"=> $gorgias_credentials->requesterName,
-		"email"=> $gorgias_credentials->requesterEmail
-	),
-	"receiver" => array(
-		"name"=> $gorgias_credentials->requesterName,
-		"email"=> $gorgias_credentials->requesterEmail
-	),
-	"channel" => "phone",
-	"via" => "phone",
-	"messages" => 	array(
-		array(
-			"public" => true,
-			"channel" => "phone",
-			"via" => "phone",
-			"receiver" => array(
-				"name"=> $gorgias_credentials->requesterName,
-				"email"=> $gorgias_credentials->requesterEmail
-			),
-			"sender" => array(
-				"name"=> $gorgias_credentials->requesterName,
-				"email"=> $gorgias_credentials->requesterEmail
-			),
-			"source" => array(
-				"type" => "ottspott-call",
-				"from" => array(
-					"name" => "Unknown yet",
-					"address" => $obj->caller_id_number				
-				),
-				"to" => array(
-					array(
-						"name" => "Foodcheri",
-						"address" => $obj->destination_number
-					),
-				),
-			),
-			"body_text" => $call_details
-		)
-	),
-);
+  "subject" => $subject,
+  "sender" => array(
+    "name"=> $gorgias_credentials->requesterName,
+    "email"=> $gorgias_credentials->requesterEmail
+    ),
+  "requester" => array(
+    "name"=> $gorgias_credentials->requesterName,
+    "email"=> $gorgias_credentials->requesterEmail
+    ),
+  "receiver" => array(
+    "name"=> $gorgias_credentials->requesterName,
+    "email"=> $gorgias_credentials->requesterEmail
+    ),
+  "channel" => "phone",
+  "via" => "phone",
+  "messages" =>   array(
+    array(
+      "public" => true,
+      "channel" => "phone",
+      "via" => "phone",
+      "receiver" => array(
+        "name"=> $gorgias_credentials->requesterName,
+        "email"=> $gorgias_credentials->requesterEmail
+        ),
+      "sender" => array(
+        "name"=> $gorgias_credentials->requesterName,
+        "email"=> $gorgias_credentials->requesterEmail
+        ),
+      "source" => array(
+        "type" => "ottspott-call",
+        "from" => array(
+          "name" => "Unknown yet",
+          "address" => $obj->caller_id_number
+          ),
+        "to" => array(
+          array(
+            "name" => "Foodcheri",
+            "address" => $obj->destination_number
+            ),
+          ),
+        ),
+      "body_text" => $call_details
+      )
+    ),
+  );
 
 // Encode in JSON
 $data_string = json_encode($data);
@@ -147,11 +147,11 @@ curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-	'Content-Type: application/json',
-	'Authorization: Basic ' . $gorgias_credentials->apiToken,
-	'Cache-Control: no-cache',
-	'Content-Length: ' . strlen($data_string)
-));
+  'Content-Type: application/json',
+  'Authorization: Basic ' . $gorgias_credentials->apiToken,
+  'Cache-Control: no-cache',
+  'Content-Length: ' . strlen($data_string)
+  ));
 
 $logs .= "\n";
 $logs .= "[". $date . " - " . __FILE__ . "] TO SEND :\n";
