@@ -126,7 +126,7 @@ $data = array(
           ),
         "to" => array(
           array(
-            "name" => "Foodcheri",
+            "name" => $gorgias_credentials->requesterName,
             "address" => $obj->destination_number
             ),
           ),
