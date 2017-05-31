@@ -5,6 +5,16 @@ $date = date('d-m-Y G:i:s');
 $json = file_get_contents('php://input');
 $obj = json_decode($json);
 $url_parts = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+$success = true; // let's be optimistic
+$response = array(
+  "ok" => true
+); // let's be optimistic
+$gorgias_credentials = array(
+  "apiToken" => "",
+  "domain" => "",
+  "requesterEmail" => "",
+  "requesterName" => ""
+);
 
 $params = explode('&', $url_parts);
 
@@ -23,7 +33,7 @@ if (!isset($result['apiToken'])){
   $response['message'] = "apiToken is missing or invalid";
 }
 
-$gorgias_credentials->apiToken = $result['apiToken'];
+$gorgias_credentials['apiToken'] = $result['apiToken'];
 
 if (!isset($result['domain'])){
   $logs .= "Cannot find domain, returning.\n";
@@ -33,13 +43,13 @@ if (!isset($result['domain'])){
 }
 
 // accept both domain.gorgias.io and domain
-$gorgias_credentials->domain = explode(".", $result['domain'])[0];
+$gorgias_credentials['domain'] = explode(".", $result['domain'])[0];
 
 if (!isset($result['requesterName'])){
   $logs .= "requesterName not found, setting it to default (Ottspott Logger).\n";
-  $gorgias_credentials->requesterName = "Ottspott Logger";
+  $gorgias_credentials['requesterName'] = "Ottspott Logger";
 } else {
-  $gorgias_credentials->requesterName = $result['requesterName'];
+  $gorgias_credentials['requesterName'] = $result['requesterName'];
 }
 
 if (!isset($result['requesterEmail'])){
@@ -49,7 +59,7 @@ if (!isset($result['requesterEmail'])){
   $response['message'] = "Gorgias requesterEmail is missing or invalid";
 }
 
-$gorgias_credentials->requesterEmail = $result['requesterEmail'];
+$gorgias_credentials['requesterEmail'] = $result['requesterEmail'];
 
 if ($success == false){
   sendResponseAndExit($response, $logs);
@@ -92,16 +102,16 @@ switch ($obj->event){
 $data = array(
   "subject" => $subject,
   "sender" => array(
-    "name"=> $gorgias_credentials->requesterName,
-    "email"=> $gorgias_credentials->requesterEmail
+    "name"=> $gorgias_credentials['requesterName'],
+    "email"=> $gorgias_credentials['requesterEmail']
     ),
   "requester" => array(
-    "name"=> $gorgias_credentials->requesterName,
-    "email"=> $gorgias_credentials->requesterEmail
+    "name"=> $gorgias_credentials['requesterName'],
+    "email"=> $gorgias_credentials['requesterEmail']
     ),
   "receiver" => array(
-    "name"=> $gorgias_credentials->requesterName,
-    "email"=> $gorgias_credentials->requesterEmail
+    "name"=> $gorgias_credentials['requesterName'],
+    "email"=> $gorgias_credentials['requesterEmail']
     ),
   "channel" => "phone",
   "via" => "phone",
@@ -111,12 +121,12 @@ $data = array(
       "channel" => "phone",
       "via" => "phone",
       "receiver" => array(
-        "name"=> $gorgias_credentials->requesterName,
-        "email"=> $gorgias_credentials->requesterEmail
+        "name"=> $gorgias_credentials['requesterName'],
+        "email"=> $gorgias_credentials['requesterEmail']
         ),
       "sender" => array(
-        "name"=> $gorgias_credentials->requesterName,
-        "email"=> $gorgias_credentials->requesterEmail
+        "name"=> $gorgias_credentials['requesterName'],
+        "email"=> $gorgias_credentials['requesterEmail']
         ),
       "source" => array(
         "type" => "ottspott-call",
@@ -126,7 +136,7 @@ $data = array(
           ),
         "to" => array(
           array(
-            "name" => $gorgias_credentials->requesterName,
+            "name" => $gorgias_credentials['requesterName'],
             "address" => $obj->destination_number
             ),
           ),
@@ -141,14 +151,14 @@ $data_string = json_encode($data);
 
 // Send request to create ticket
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, "https://" . $gorgias_credentials->domain . ".gorgias.io/api/tickets/");
+curl_setopt($ch, CURLOPT_URL, "https://" . $gorgias_credentials['domain'] . ".gorgias.io/api/tickets/");
 curl_setopt($ch, CURLOPT_HEADER, false);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
   'Content-Type: application/json',
-  'Authorization: Basic ' . $gorgias_credentials->apiToken,
+  'Authorization: Basic ' . $gorgias_credentials['apiToken'],
   'Cache-Control: no-cache',
   'Content-Length: ' . strlen($data_string)
   ));
@@ -160,6 +170,7 @@ $logs .= "\n";
 
 $output = curl_exec($ch);
 $result = curl_getinfo($ch);
+curl_close($ch);
 
 $logs .= "\n";
 $logs .= "[". $date . " - " . __FILE__ . "] HTTP CODE FROM GORGIAS : " . $result["http_code"];
@@ -167,11 +178,15 @@ $logs .= "\n";
 $logs .= "\n";
 $logs .= "\n";
 
-curl_close($ch);
-$fplogs = fopen('/tmp/webhooks_gorgias.txt', 'a+');
-fwrite($fplogs, $logs);
-fclose($fplogs);
+if ($result["http_code"] != "200"){
+  $response['ok'] = false;
+  $response['message'] = 'Failed to create ticket at Gorgias, status code : ' . $result["http_code"];
+} else {
+  $response['ok'] = true;
+  $response['message'] = 'Successfully created ticket at Gorgias.';
+}
 
+sendResponseAndExit($response, $logs);
 
 function sendResponseAndExit($response, $logs){
   header('Content-Type: application/json');
