@@ -49,7 +49,7 @@ if (!isset($result['requesterEmail'])){
   $response['message'] = "Gorgias requesterEmail is missing or invalid";
 }
 
-$gorgias_credentials->requesterEmail = $result['requesterEmail']);
+$gorgias_credentials->requesterEmail = $result['requesterEmail'];
 
 if ($success == false){
   sendResponseAndExit($response, $logs);
@@ -75,6 +75,17 @@ case "incoming_call_ended_and_answered":
 	$subject = "Incoming call terminated from " . $obj->caller_id_number;
 	$call_details = "Answerer : " . $obj->answered_by . " - duration : " . $obj->duration . " seconds";
 	break;
+case "incoming_call_ended_and_voicemail_left":
+  $subject = "Received Voicemail";
+
+  if (!property_exists($obj, 'caller_id_name')) {
+    $subject .= " (from : " . $obj->caller_id_number . ")";
+  } else {
+    $subject .= " (from : " . $obj->caller_id_name . ")";
+  }
+
+  $call_details = "Voicemail URL <a href='" . $obj->voicemail_url . "'>here</a>, duration : " . $obj->voicemail_duration . "s";
+  break;
 }
 
 // Build Gorgias ticket data
