@@ -94,7 +94,7 @@ switch ($obj->event){
     $subject .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $call_details = "Voicemail URL <a href='" . $obj->voicemail_url . "'>here</a>, duration : " . $obj->voicemail_duration . "s";
+  $call_details = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
   break;
 }
 
