@@ -158,7 +158,7 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
   'Content-Type: application/json',
-  'Authorization: Basic ' . $gorgias_credentials['apiToken'],
+  'Authorization: Basic ' . base64_encode($gorgias_credentials['requesterEmail'] . ':' . $gorgias_credentials['apiToken']),
   'Cache-Control: no-cache',
   'Content-Length: ' . strlen($data_string)
   ));
