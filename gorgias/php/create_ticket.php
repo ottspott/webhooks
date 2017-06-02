@@ -70,31 +70,50 @@ $logs .= $json;
 $logs .= "\n";
 
 $subject = "";
-$call_details = "";
+$call_details_raw = "";
+$call_details_raw_html = "";
 
 switch ($obj->event){
   case "outgoing_call_ended":
-  $subject = "Outgoing call to " . $obj->destination_number;
-  $call_details = "Caller : " . $obj->caller_id_name . " - duration : " . $obj->duration . " seconds";
+  $subject = "Outgoing call to +" . $obj->destination_number;
+  $call_details_raw = "Caller : " . $obj->caller_id_name . " - duration : " . $obj->duration . " seconds";
+  $call_details_raw_html = "Caller : <b>" . $obj->caller_id_name . "</b> - duration : " . $obj->duration . " seconds";
   break;
   case "incoming_call_ended_and_missed":
-  $subject = "Missed call from " . $obj->caller_id_number;
-  $call_details = "A call has been missed";
+  $subject = "Missed call ";
+
+  if (!property_exists($obj, 'caller_id_name')) {
+    $subject .= " from +" . $obj->caller_id_number;
+  } else {
+    $subject .= " from " . $obj->caller_id_name . " (+" . $obj->caller_id_number . ")";
+  }
+
+  $call_details_raw = "A call has been missed";
+  $call_details_raw_html = "A call has been missed";
   break;
   case "incoming_call_ended_and_answered":
-  $subject = "Incoming call terminated from " . $obj->caller_id_number;
-  $call_details = "Answerer : " . $obj->answered_by . " - duration : " . $obj->duration . " seconds";
+  $subject = "Incoming call terminated";
+
+  if (!property_exists($obj, 'caller_id_name')) {
+    $subject .= " from +" . $obj->caller_id_number;
+  } else {
+    $subject .= " from " . $obj->caller_id_name . " (+" . $obj->caller_id_number . ")";
+  }
+
+  $call_details_raw = $obj->detailed_status . " - duration : " . $obj->duration . " seconds";
+  $call_details_raw_html = $obj->detailed_status . " - duration : " . $obj->duration . " seconds";
   break;
   case "incoming_call_ended_and_voicemail_left":
   $subject = "Received Voicemail";
 
   if (!property_exists($obj, 'caller_id_name')) {
-    $subject .= " (from : " . $obj->caller_id_number . ")";
+    $subject .= " from +" . $obj->caller_id_number;
   } else {
-    $subject .= " (from : " . $obj->caller_id_name . ")";
+    $subject .= " from " . $obj->caller_id_name . " (+" . $obj->caller_id_number . ")";
   }
 
-  $call_details = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
+  $call_details_raw = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
+  $call_details_raw_html = "Voicemail <a href='" . $obj->voicemail_url . "' target='_blank'>here</a>, duration : " . $obj->voicemail_duration . "s";
   break;
 }
 
@@ -141,7 +160,8 @@ $data = array(
             ),
           ),
         ),
-      "body_text" => $call_details
+      "body_text" => $call_details_raw,
+      "body_thtm" => $call_details_raw_html
       )
     ),
   );
