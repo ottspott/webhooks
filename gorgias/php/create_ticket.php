@@ -113,7 +113,7 @@ switch ($obj->event){
   }
 
   $call_details_raw = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
-  $call_details_raw_html = "Voicemail <a href='" . $obj->voicemail_url . "' target='_blank'>here</a>, duration : " . $obj->voicemail_duration . "s";
+  $call_details_raw_html = "Voicemail file : <audio src='" . $obj->voicemail_url . "' controls>";
   break;
 }
 
