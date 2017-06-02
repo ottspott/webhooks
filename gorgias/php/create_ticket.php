@@ -161,7 +161,7 @@ $data = array(
           ),
         ),
       "body_text" => $call_details_raw,
-      "body_thtm" => $call_details_raw_html
+      "body_html" => $call_details_raw_html
       )
     ),
   );
