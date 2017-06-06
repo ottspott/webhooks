@@ -114,6 +114,11 @@ switch ($obj->event){
 
   $call_details_raw = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
   $call_details_raw_html = "Voicemail file : <audio src='" . $obj->voicemail_url . "' controls>";
+
+  if (!is_null($obj->voicemail_transcription)){
+    $call_details_raw .= ", transcribed text : '" . $obj->voicemail_transcription . "'";
+    $call_details_raw_html .= "<div>transcribed text : <code>" . $obj->voicemail_transcription . "</code></div>";
+  }
   break;
 }
 
