@@ -152,7 +152,12 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  $activity["note"] = "<p>Voicemail has just been left</p>";
+  $activity["note"] = "<p>Voicemail file : <a href='" .$obj->voicemail_url . "' target='_blank'>here</a></p>";
+
+  if (!is_null($obj->voicemail_transcription)){
+    $activity["note"] .= "<p>Transcribed text : <code>" .$obj->voicemail_transcription . "</code></p>";
+  }
+
   break;
 }
 
