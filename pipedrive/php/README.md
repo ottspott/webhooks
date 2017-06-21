@@ -17,3 +17,6 @@ Activity creation is triggered by the Ottspott phone events listed below :
 
 Ottspott passes as much information as possible including Pipedrive contact
 details stored in Ottspott.
+
+- `create_activity.php` simply creates an activity in Pipedrive
+- `search_user_by_phone_number_and_create_activity.php` searches in Pipedrive if a contact exists, and if so, creates the activity for that contact
