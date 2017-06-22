@@ -103,7 +103,7 @@ switch($obj->event){
   $subject = "Received Voicemail";
   $user = searchUserByPhone($client, $obj->caller_id_number);
   $requester = buildZendeskRequester($user, $obj->caller_id_name, $obj->caller_id_number);
-  $body = "Voicemail has just been left";
+  $body = "Voicemail has just been left.\nFile : " . $obj->voicemail_url . "\nText : " . $obj->voicemail_transcription;
   break;
 }
 
