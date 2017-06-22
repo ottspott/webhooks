@@ -56,7 +56,7 @@ $activity = array(
 );
 
 $person_details = searchUserByPhone($pipedrive_credentials['apiToken'], $obj->caller_id_number);
-if (!is_null($person_id)) {
+if (!is_null($person_details)) {
   $activity["person_id"] = $person_details[0];
 }
 
