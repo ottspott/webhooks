@@ -4,6 +4,8 @@ $date = date('d-m-Y G:i:s');
 $access_token = '';
 $client_id = 'your_client_id';
 $client_secret = 'your_client_secret';
+$manager = new MongoDB\Driver\Manager("your_connection_uri");
+$table_name = 'your_db_name.table_name_with_users';
 
 $success = true;
 $response['ok'] = true;
@@ -54,6 +56,9 @@ $salesforce_id = $result['user_id'];
 
 if($domain && $refresh_token && $salesforce_id) {
 
+  $filter = [];
+  $options = ["projection" => []];
+
   $params = array(
     "grant_type" => 'refresh_token',
     "client_id" => $client_id,
@@ -85,37 +90,25 @@ if($obj->event === "outgoing_call_ended" || $obj->event === "new_outgoing_call")
 } else  {
   $phone = $obj->caller_id_number;
 }
-$logs .= 'PHONE: ' . $phone;
   $contact = getSalesforceContact($phone, $access_token, $domain);
   
   if($contact === null) {
     $logs .= "Cannot find Salesforce contact, returning.\n";
-    $success = false;
-    $response['ok'] = false;
+    $conact_id = "";
+    $contact_name = "";
     $response['message'] = "Salesforce contact was not found";
   } else {
     $contact_name = " (" . $contact->FirstName . " " . $contact->LastName . ")"; 
-    $contact_id =  $contact->Id;
-    $success = true;
-    $response['ok'] = true;
+    $contact_id =  $contact->Id;  
     $response['message'] = "Salesforce contact was found " . $contact_name;
   }
 }
 
 
-if ($success == false){
-  sendResponseAndExit($response, $logs);
-}
 
-$logs .= "[". $date . " - " . __FILE__ . "] JSON RECEIVED FROM OTTSPOTT :\n";
+$logs .= " \n [". $date . " - " . __FILE__ . "] JSON RECEIVED FROM OTTSPOTT :\n";
 $logs .= $json;
 $logs .= "\n";
-
-$fplogs = fopen('/tmp/salesforce_create_activity.txt', 'a+');
-fwrite($fplogs, $logs);
-fclose($fplogs);
-
-$logs = "";
 
 $activity = array(
     "WhoId" => $contact_id,
@@ -129,28 +122,19 @@ $activity = array(
     "ActivityDate" => time()*1000
 );
 
+$fplogs = fopen('/tmp/salesforce_create_activity.txt', 'a+');
+fwrite($fplogs, $logs);
+fclose($fplogs);
 
+$logs = "";
+$json = ""; 
 
 switch($obj->event){
 
-  case "new_incoming_call":
-    $activity["Description"] = "Incoming call started ";
-    $activity["Description"] .= "\n From : +" . $obj->caller_id_number . $contact_name;
-    $activity["Description"] .= "\n To: +" . $obj->destination_number;
-  break;
-
-  case "incoming_call_answered":
-    $activity["Description"] = $obj->detailed_status . " ";
-    $activity["Description"] .= "\n From : +" . $obj->caller_id_number . $contact_name;
-    $activity["Description"] .= "\n To : +" . $obj->destination_number;
-    $activity["Status"] = "In Progress";
-  break;
-
   case "incoming_call_ended_and_missed":
-    $activity["Description"] = " Missed call <br />";
+    $activity["Description"] = " Missed call";
     $activity["Description"] .= "\n From : +" . $obj->caller_id_number . $contact_name;
     $activity["Description"] .= "\n To : +" . $obj->destination_number;
-    ///??????
     $activity["Status"] = "Completed";
   break;
 
@@ -165,14 +149,29 @@ switch($obj->event){
       $activity["Description"] .= "\n Recording: " . $obj->recording_url ;
     }
 
-  break;
+    try {
+      $filter = ["profile.user_id" => $obj->answered_by, "profile.team_id" => $obj->slack_team_id];
+      $query = new MongoDB\Driver\Query($filter, $options);
+      $res = $manager->executeQuery($table_name , $query);
+      foreach ($res as $doc) {
+          $user = $doc;
+      break;
+      }
 
-  case "new_outgoing_call":
-    $activity["Description"] = "Outgoing call has just started";
-    $activity["Description"] .= "\n From : +" . $obj->caller_id_number;
-    $activity["Description"] .= "\n To : +" . $obj->destination_number . $contact_name;
-    $activity["Status"] = 'In Progress';
-    $activity["CallType"] = "Outbound";
+      if (!empty($user)) {
+          $json .= 'user email ' . $user->profile->email;  
+          $owner_id = getSalesForceUser($access_token, $user->profile->email, $domain);
+          if($owner_id) {
+            $json .= 'Owner Id ' . $owner_id;
+            $activity["OwnerId"] = $owner_id;
+          }
+      }
+    } catch (\MongoDB\Driver\Exception $e) {
+        echo $e->getMessage(), "\n";
+        $logs .= " USER DB REQUEST error ". $e->getMessage();
+        exit;
+    }
+
   break;
 
   case "outgoing_call_ended":
@@ -189,6 +188,31 @@ switch($obj->event){
     if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
       $activity["Description"] .= "\n Recording: " . $obj->recording_url;
     }
+    try {
+      $filter = ["profile.name" => $obj->caller_id_name, "profile.team_id" => $obj->slack_team_id];
+      $query = new MongoDB\Driver\Query($filter, $options);
+      $res = $manager->executeQuery($table_name, $query);
+       
+  
+  
+      foreach ($res as $doc) {
+        $user = $doc;
+        break;
+      }
+
+      if (!empty($user)) {
+          $json .= 'user email ' . $user->profile->email;  
+          $owner_id = getSalesForceUser($access_token, $user->profile->email, $domain);
+          if($owner_id) {
+            $json .= 'Owner Id ' . $owner_id;
+            $activity["OwnerId"] = $owner_id;
+          }
+      }
+    } catch (\MongoDB\Driver\Exception $e) {
+        echo $e->getMessage(), "\n";
+        $logs .= " USER DB REQUEST error ". $e->getMessage();
+        exit;
+    }
   break;
 
   case "incoming_call_ended_and_voicemail_left":
@@ -202,20 +226,24 @@ switch($obj->event){
   break;
 
 }
+$logs .= "[". $date . " - " . __FILE__ . "] JSON SALESFORCE USER :\n";
+$logs .= $json;
+$logs .= "\n";
 
-// Now send request to Salesforce to create Task
+
+// Now send request to Salesforce
 $url = "https://" . $domain . ".salesforce.com/services/data/v21.0/sobjects/Task/";
-$activity_string = json_encode($activity);
+$activity_string = json_encode($activity) . " " .$logs;
 $fplogs = fopen('/tmp/salesforce_create_activity.txt', 'a+');
-fwrite($fplogs, $$activity_string);
-fclose($fplogs);
+  fwrite($fplogs, $activity_string);
+  fclose($fplogs);
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $activity_string);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/json',
+    'Content-Type: application/json',
             'Accept: application/json',        
             'Authorization: Bearer ' . $access_token)
 );
@@ -225,7 +253,6 @@ curl_close($ch);
 
 // create an array from the data that is sent back from the API
 $result = json_decode($output, 1);
-$logs .= "\n RESULT " . $output . "\n";
 
 if ($result['success'] === true) {
   $activity = $result['id'];
@@ -233,12 +260,12 @@ if ($result['success'] === true) {
   $logs .= "JSON : " . $output . "\n";
   $success = true;
   $response['ok'] = true;
-  $response['message'] = "Successfully created activity";
+  $response['message'] .= " Successfully created activity";
 } else {
   $logs .= "Failed to create activity.\n";
   $success = false;
   $response['ok'] = false;
-  $response['message'] = "Failed to create activity at Salesforce " + json_encode($result["errors"]);
+  $response['message'] .= " Failed to create activity at Salesforce " + json_encode($result["errors"]);
 }
 
 sendResponseAndExit($response, $logs);
@@ -286,9 +313,9 @@ function duration($seconds_count)
 /**
  * A function to search Salesforce contact by phone
  *
- * @phone       concact phone in international format 
+ * @phone       contact phone in international format 
  * @access_token     Salesforce access_token
- * @domain Salesforce domain
+ * @domain     Salesforce domain
  *
  * @return      object 
  */
@@ -321,6 +348,50 @@ $result = json_decode($output);
 
   if(isset($result[0]->Id)) {
     return  $result[0];
+  } else {
+    return null;
+  }
+
+}
+
+
+/**
+ * A function to search Salesforce user by email
+ *
+ * @email             User email 
+ * @access_token      Salesforce access_token
+ * @domain            Salesforce domain
+ *
+ * @return      object 
+ */
+
+function getSalesForceUser($email, $access_token, $domain){
+  $url = "https://" . $domain . ".salesforce.com/services/data/v36.0/parameterizedSearch";
+$params = array(
+    "q" => $email,
+    "fields" => ["id"],
+  "sobjects" => [ array("name" => "User")],
+    "in" => "ALL"
+);
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_POST,true);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+  curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+      'Content-Type: application/json',
+      'Accept: application/json',
+      'Authorization: Bearer ' . $access_token
+  ));
+
+  $output = curl_exec($ch);
+  $info = curl_getinfo($ch);
+  curl_close($ch);
+
+$result = json_decode($output);
+
+  if(isset($result[0]->Id)) {
+    return  $result[0]->Id;
   } else {
     return null;
   }
