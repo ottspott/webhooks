@@ -35,6 +35,9 @@ if (!isset($result['apiToken'])){
   $response['message'] = "apiToken is missing or invalid";
 }
 
+header('Content-Type: application/json');
+$pipedrive_credentials = new \stdClass();
+
 $pipedrive_credentials->apiToken = $result['apiToken'];
 
 if (!isset($result['domain'])){
@@ -195,7 +198,6 @@ if (!empty($result['data']['id'])) {
 sendResponseAndExit($response, $logs);
 
 function sendResponseAndExit($response, $logs){
-  header('Content-Type: application/json');
   echo json_encode($response);
 
   $fplogs = fopen('/tmp/pipedrive_create_activity.txt', 'a+');
