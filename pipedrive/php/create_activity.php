@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * An Ottspott Webhook that creates an activity in Pipedrive.
+ *
+ * Ottspott will pass as much information as possible, for instance if
+ * your contacts have been imported in Ottspott from Pipedrive and a
+ * contact matches for a the given call that triggers the webhook,
+ * Ottspott will pass a 'pipedrive_person_id' that refers to the contact
+ * object in Pipedrive.
+ */
+
 $date = date('d-m-Y G:i:s');
 
 $success = true;
@@ -79,8 +89,6 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  
-
   $activity["note"] = "<p>Call has just started</p>";
   break;
   case "incoming_call_answered":
@@ -93,8 +101,6 @@ switch($obj->event){
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
-
-  
 
   $activity["note"] = "<p>" . $obj->detailed_status . "</p>";
   break;
@@ -109,8 +115,6 @@ switch($obj->event){
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
-  
-
   $activity["note"] = "<p>Call has been left unanswered</p>";
   break;
   case "incoming_call_ended_and_answered":
@@ -123,8 +127,6 @@ switch($obj->event){
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
-
-  
 
   $activity["note"] =  "<p>" . $obj->detailed_status . " (duration : " . duration($obj->duration) . ")</p>";
   if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
@@ -167,8 +169,6 @@ switch($obj->event){
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
-
-  
 
   $activity["note"] = "<p>Voicemail file : <a href='" .$obj->voicemail_url . "' target='_blank'>here</a></p>";
 
@@ -299,4 +299,3 @@ function duration($seconds_count)
 }
 
 ?>
-
