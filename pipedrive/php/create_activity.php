@@ -1,15 +1,5 @@
 <?php
 
-/**
- * An Ottspott Webhook that creates an activity in Pipedrive.
- *
- * Ottspott will pass as much information as possible, for instance if
- * your contacts have been imported in Ottspott from Pipedrive and a
- * contact matches for a the given call that triggers the webhook,
- * Ottspott will pass a 'pipedrive_person_id' that refers to the contact
- * object in Pipedrive.
- */
-
 $date = date('d-m-Y G:i:s');
 
 $success = true;
@@ -34,6 +24,9 @@ if (!isset($result['apiToken'])){
   $response['ok'] = false;
   $response['message'] = "apiToken is missing or invalid";
 }
+
+//header('Content-Type: application/json');
+$pipedrive_credentials = new \stdClass();
 
 $pipedrive_credentials->apiToken = $result['apiToken'];
 
@@ -64,59 +57,80 @@ $activity = array(
   "type" => "call",
   "done" => 1
 );
+if($obj->event == 'new_outgoing_call' || $obj->event == 'outgoing_call_ended') {
+  $person_details = searchUserByPhone($pipedrive_credentials->apiToken, $obj->destination_number);
+} else {
+  $person_details = searchUserByPhone($pipedrive_credentials->apiToken, $obj->caller_id_number);
+}
 
-if (property_exists($obj, 'contact_data') && $obj->contact_data->is_pipedrive_contact == true) {
-  // Found Pipedrive contact, set person_id
-  $activity["person_id"] = $obj->contact_data->pipedrive_person_id;
+if (!is_null($person_details)) {
+  $activity["person_id"] = $person_details[0];
 }
 
 switch($obj->event){
   case "new_incoming_call":
   $activity["subject"] = "Incoming call started";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if (is_string($person_details[1])) {
+    $activity["subject"] .= " (from : " . $person_details[1] . ")";
+  } elseif (!property_exists($obj, 'caller_id_name')) {
     $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
+
+  
 
   $activity["note"] = "<p>Call has just started</p>";
   break;
   case "incoming_call_answered":
   $activity["subject"] = "<p>Incoming call answered</p>";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if (is_string($person_details[1])) {
+    $activity["subject"] .= " (from : " . $person_details[1] . ")";
+  } elseif (!property_exists($obj, 'caller_id_name')) {
     $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
+
+  
 
   $activity["note"] = "<p>" . $obj->detailed_status . "</p>";
   break;
   case "incoming_call_ended_and_missed":
   $activity["subject"] = "Missed call";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if (is_string($person_details[1])) {
+    $activity["subject"] .= " (from : " . $person_details[1] . ")";
+  } elseif (!property_exists($obj, 'caller_id_name')) {
     $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
+
+  
 
   $activity["note"] = "<p>Call has been left unanswered</p>";
   break;
   case "incoming_call_ended_and_answered":
   $activity["subject"] = "Incoming call ended";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if (is_string($person_details[1])) {
+    $activity["subject"] .= " (from : " . $person_details[1] . ")";
+  } elseif (!property_exists($obj, 'caller_id_name')) {
     $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
+  
+
   $activity["note"] =  "<p>" . $obj->detailed_status . " (duration : " . duration($obj->duration) . ")</p>";
   if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
-	  $activity["note"] .= "<p>Call has been recorded : <a href='" . $obj->recording_url . "'>Recording file</a>";
+    $activity["note"] .= "<p>Call has been recorded : <a href='" . $obj->recording_url . "'>Recording file</a>";
   }
+  $activity["duration"] = gmdate('H:i', $obj->duration + 59);
   break;
   case "new_outgoing_call":
   $activity["subject"] = "Outgoing call started";
@@ -137,27 +151,30 @@ switch($obj->event){
   } else {
     $activity["subject"] .= " (to : " . $obj->callee_name . ")";
   }
-
+  $activity["duration"] = gmdate('H:i', $obj->duration + 59);
   $activity["note"] = "<p>" . $obj->detailed_status . " (duration : " . duration($obj->duration) . ")</p>";
   if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
-	  $activity["note"] .= "<p>Call has been recorded : <a href='" . $obj->recording_url . "'>Recording file</a>";
+    $activity["note"] .= "<p>Call has been recorded : <a href='" . $obj->recording_url . "'>Recording file</a>";
   }
   break;
   case "incoming_call_ended_and_voicemail_left":
   $activity["subject"] = "Received Voicemail";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if (is_string($person_details[1])) {
+    $activity["subject"] .= " (from : " . $person_details[1] . ")";
+  } elseif (!property_exists($obj, 'caller_id_name')) {
     $activity["subject"] .= " (from : " . $obj->caller_id_number . ")";
   } else {
     $activity["subject"] .= " (from : " . $obj->caller_id_name . ")";
   }
 
+  
+
   $activity["note"] = "<p>Voicemail file : <a href='" .$obj->voicemail_url . "' target='_blank'>here</a></p>";
 
   if (!is_null($obj->voicemail_transcription)){
-    $activity["note"] .= "<p>Transcribed text : <code>" .$obj->voicemail_transcription . "</code></p>";
+  $activity["note"] .= "<p>Transcribed text : <code>" .$obj->voicemail_transcription . "</code></p>";
   }
-
   break;
 }
 
@@ -205,6 +222,53 @@ function sendResponseAndExit($response, $logs){
 }
 
 /**
+ * Tries to find a user in Pipedrive from a phone number in Ottspott.
+ *
+ * Query Pipedrive to find a user from a phone number using Pipedrive's search
+ * API. Return the first user that matches on success, or an empty value
+ * if nothing has been found. 
+ *
+ * @param array $apiToken The Pipedrive API token
+ * @param string $phone The phone number to search the user
+ *
+ * @return [pipedrive_person_id, title] or NULL
+ */
+function searchUserByPhone($apiToken, $phone){
+  $url = "https://api.pipedrive.com/v1/searchResults?term=" . $phone . "&item_type=person&start=0&limit=1&api_token=" . $apiToken;
+
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Content-Type: application/json',
+    'Accept: application/json'
+  ));
+
+  $output = curl_exec($ch);
+  curl_close($ch);
+  $obj = json_decode($output, 1);
+
+  $logs = "[". $date . " - " . __FILE__ . "] search result from Pipedrive :\n";
+  $logs .= $output . "\n";
+
+  if ($obj['success'] != true || $obj['data'] == NULL) {
+    $logs .= 'Cannot find contact for phone ' . $phone . "\n";
+  } else {
+  $logs .= 'Found user for phone ' . $phone . ' : ' . json_encode($obj['data'][0]['title']) . "\n";
+  }
+
+  $fplogs = fopen('/tmp/pipedrive_create_activity.txt', 'a+');
+  fwrite($fplogs, $logs);
+  fclose($fplogs);
+
+  if ($obj['success'] != true || $obj['data'] == NULL) {
+    return NULL;
+  }
+
+  return [$obj['data'][0]['id'], $obj['data'][0]['title']];
+}
+
+/**
  * A function for making time periods readable
  *
  * @link        https://snippets.aktagon.com/snippets/122-how-to-format-number-of-seconds-as-duration-with-php
@@ -235,3 +299,4 @@ function duration($seconds_count)
 }
 
 ?>
+
