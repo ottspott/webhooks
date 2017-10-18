@@ -78,6 +78,9 @@ switch ($obj->event){
   $subject = "Outgoing call to +" . $obj->destination_number;
   $call_details_raw = "Caller : " . $obj->caller_id_name . " - duration : " . $obj->duration . " seconds";
   $call_details_raw_html = "Caller : <b>" . $obj->caller_id_name . "</b> - duration : " . $obj->duration . " seconds";
+  if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
+    $call_details_raw_html .= "Recording file : <audio src='" . $obj->recording_url . "' controls></audio>";
+  }
   break;
   case "incoming_call_ended_and_missed":
   $subject = "Missed call ";
@@ -102,6 +105,10 @@ switch ($obj->event){
 
   $call_details_raw = $obj->detailed_status . " - duration : " . $obj->duration . " seconds";
   $call_details_raw_html = $obj->detailed_status . " - duration : " . $obj->duration . " seconds";
+
+  if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
+    $call_details_raw_html .= "Recording file : <audio src='" . $obj->recording_url . "' controls></audio>";
+  }
   break;
   case "incoming_call_ended_and_voicemail_left":
   $subject = "Received Voicemail";
@@ -113,7 +120,7 @@ switch ($obj->event){
   }
 
   $call_details_raw = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
-  $call_details_raw_html = "Voicemail file : <audio src='" . $obj->voicemail_url . "' controls>";
+  $call_details_raw_html = "Voicemail file : <audio src='" . $obj->voicemail_url . "' controls></audio>";
 
   if (!is_null($obj->voicemail_transcription)){
     $call_details_raw .= ", transcribed text : '" . $obj->voicemail_transcription . "'";
@@ -224,4 +231,3 @@ function sendResponseAndExit($response, $logs){
 }
 
 ?>
-
