@@ -11,7 +11,7 @@ var app = express();
 app.use(bodyParser.json());
 
 app.post("/webhook/ottspott", function(request, response) {
-  console.log("URL " + request.url); 
+  console.log("URL " + request.url);
   console.log("Received JSON from Ottspott : " + JSON.stringify(request.body));
 
   if (typeof request.body === "undefined" || typeof request.body.event === "undefined"){
