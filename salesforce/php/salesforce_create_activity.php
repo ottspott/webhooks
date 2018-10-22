@@ -2,10 +2,6 @@
 
 $date = date('d-m-Y G:i:s');
 $access_token = '';
-$client_id = 'your_client_id';
-$client_secret = 'your_client_secret';
-$manager = new MongoDB\Driver\Manager("your_connection_uri");
-$table_name = 'your_db_name.table_name_with_users';
 
 $success = true;
 $response['ok'] = true;
@@ -24,7 +20,7 @@ foreach ($params as $param){
 }
 $logs .= "\n POST params \n" ;
 foreach ($obj as $key => $value) {
-  $logs .= $key . ": " . $value . "\n";
+  $logs .= $key . ": " . json_encode($value) . "\n";
 }
 
 if (!isset($result['domain'])){
@@ -53,6 +49,23 @@ if (!isset($result['user_id'])){
 }
 
 $salesforce_id = $result['user_id'];
+
+if(!isset($result["dev"])) {
+  $client_id = '3MVG9HxRZv05HarRN0RODQsIUrV9a5QnSNDdPI61Zp1teESXrWB1NzBW4eovNe.zt.r0V4Q22uQ8iFeoDGgwZ';
+  $client_secret = '1699317100791549356';
+  $manager = new MongoDB\Driver\Manager("mongodb://uqgkisx9lny8g7z:HgbkiqcoLBM1yprLdG0f@b5kxgmjr4cxkwwb-mongodb.services.clever-cloud.com:2005/b5kxgmjr4cxkwwb");
+  $table_name = "b5kxgmjr4cxkwwb.users";
+} elseif ($result["dev"] == "dev") {
+  $client_id = '3MVG9HxRZv05HarRN0RODQsIUrSqNuWqm81WtbrtKytJaaLUqdEnaqRvtPIHM_V5P3Tm7KOpzVE57Irgo3fnf';
+  $client_secret = '3062949387980370332';
+  $manager = new MongoDB\Driver\Manager("mongodb://urom99oo9qwydbi:e6kk2h1XfbUHqY2vfcFBbgaksat89ofrvkg@139.59.149.98:27017/ottspott_devel");
+  $table_name = "ottspott_devel.users";
+} elseif($result["dev"] == "dev_am") {
+  $client_id = '3MVG9HxRZv05HarRN0RODQsIUrfZLPnr3bZI7QJMNc5J5GYkKKvTdu0bxMrkYsGtB6WbPm3rsavRdXX01pPuO';
+  $client_secret = '1222323082055324236';
+  $manager = new MongoDB\Driver\Manager("mongodb://urom99oo9qwydbi:e6kk2h1XfbUHqY2vfcFBbgaksat89ofrvkg@139.59.149.98:27017/ottspott_devel");
+  $table_name = "ottspott_devel.users";
+}
 
 if($domain && $refresh_token && $salesforce_id) {
 
@@ -90,20 +103,35 @@ if($obj->event === "outgoing_call_ended" || $obj->event === "new_outgoing_call")
 } else  {
   $phone = $obj->caller_id_number;
 }
-  $contact = getSalesforceContact($phone, $access_token, $domain);
+$logs .= 'PHONE: ' . $phone . "\n";
+$contact = getSalesforceContact($phone, $access_token, $domain, 'Contact');
   
-  if($contact === null) {
-    $logs .= "Cannot find Salesforce contact, returning.\n";
-    $conact_id = "";
-    $contact_name = "";
-    $response['message'] = "Salesforce contact was not found";
-  } else {
-    $contact_name = " (" . $contact->FirstName . " " . $contact->LastName . ")"; 
-    $contact_id =  $contact->Id;  
-    $response['message'] = "Salesforce contact was found " . $contact_name;
-  }
+if($contact === null) {
+     $lead = getSalesforceContact($phone, $access_token, $domain, 'Lead'); 
+     if($lead === null) {
+       $logs .= "Cannot find Salesforce contact or lead, returning.\n";
+       $success = false;
+       $response['ok'] = false;
+       $response['message'] = "Salesforce contact or lead was not found";
+    } else {
+     $contact_name = " (" . $lead->FirstName . " " . $lead->LastName . ")"; 
+     $contact_id =  $lead->Id;
+     $success = true;
+     $response['ok'] = true;
+     $response['message'] = "Salesforce lead was found " . $contact_name;
+    }
+   } else {
+     $contact_name = " (" . $contact->FirstName . " " . $contact->LastName . ")"; 
+     $contact_id =  $contact->Id;
+     $success = true;
+     $response['ok'] = true;
+     $response['message'] = "Salesforce contact was found " . $contact_name;
+   }
+} 
+ 
+if ($success == false){
+ sendResponseAndExit($response, $logs);
 }
-
 
 
 $logs .= " \n [". $date . " - " . __FILE__ . "] JSON RECEIVED FROM OTTSPOTT :\n";
@@ -136,6 +164,7 @@ switch($obj->event){
     $activity["Description"] .= "\n From : +" . $obj->caller_id_number . $contact_name;
     $activity["Description"] .= "\n To : +" . $obj->destination_number;
     $activity["Status"] = "Completed";
+    $activity["Subject"] = "Missed call";
   break;
 
   case "incoming_call_ended_and_answered":
@@ -144,7 +173,7 @@ switch($obj->event){
     $activity["Description"] .= "\n To : +" . $obj->destination_number;
     $activity["Status"] = 'Completed';
     $activity["CallDurationInSeconds"] = $obj->duration;
-
+    $activity["Subject"] = $obj->detailed_status . " (duration : " . duration($obj->duration) . ") ";	
     if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
       $activity["Description"] .= "\n Recording: " . $obj->recording_url ;
     }
@@ -184,7 +213,7 @@ switch($obj->event){
     $activity["Status"] = 'Completed';
     $activity["CallDurationInSeconds"] = $obj->duration;
     $activity["CallType"] = "Outbound";
-
+    $activity["Subject"] = "Outgoing call ended (duration : " . duration($obj->duration) . ") ";
     if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
       $activity["Description"] .= "\n Recording: " . $obj->recording_url;
     }
@@ -217,6 +246,7 @@ switch($obj->event){
 
   case "incoming_call_ended_and_voicemail_left":
     $activity["Description"] = "Received Voicemail (duration: " . duration($obj->voicemail_duration) . ")";
+    $activity["Subject"] = "Received Voicemail (duration: " . duration($obj->voicemail_duration) . ")";
     $activity["Description"] .= "\n Voicemail: " .  $obj->voicemail_url;
     $activity["Description"] .= "\n From : +" . $obj->caller_id_number . $contact_name ;
     $activity["Description"] .= "\n To : +" . $obj->destination_number;
@@ -233,7 +263,7 @@ $logs .= "\n";
 
 // Now send request to Salesforce
 $url = "https://" . $domain . ".salesforce.com/services/data/v21.0/sobjects/Task/";
-$activity_string = json_encode($activity) . " " .$logs;
+$activity_string = json_encode($activity);
 $fplogs = fopen('/tmp/salesforce_create_activity.txt', 'a+');
   fwrite($fplogs, $activity_string);
   fclose($fplogs);
@@ -253,7 +283,15 @@ curl_close($ch);
 
 // create an array from the data that is sent back from the API
 $result = json_decode($output, 1);
-
+$logs .= "\n RESULT " . $output . "\n";
+// check if an id came back
+/*
+{
+    "id": "00T0Y00000D9vsDUAR",
+    "success": true,
+    "errors": []
+}
+*/
 if ($result['success'] === true) {
   $activity = $result['id'];
   $logs .= "Created activity : " . $activity_string . " " . $result["id"] . "\n" ;
@@ -313,20 +351,16 @@ function duration($seconds_count)
 /**
  * A function to search Salesforce contact by phone
  *
- * @phone       contact phone in international format 
- * @access_token     Salesforce access_token
- * @domain     Salesforce domain
- *
- * @return      object 
+ * @phone       concact phone in international format 
  */
 
-function getSalesforceContact($phone, $access_token, $domain)
+function getSalesforceContact($phone, $access_token, $domain, $name)
 {
   $url = "https://" . $domain . ".salesforce.com/services/data/v36.0/parameterizedSearch";
 $params = array(
     "q" => $phone,
     "fields" => ["id", "firstName", "lastName", "phone"],
-  "sobjects" => [ array("name" => "Lead"), array("name"=> "Contact")],
+  "sobjects" => [ array("name" => $name)],
     "in" => "ALL"
 );
   $ch = curl_init();
@@ -353,19 +387,7 @@ $result = json_decode($output);
   }
 
 }
-
-
-/**
- * A function to search Salesforce user by email
- *
- * @email             User email 
- * @access_token      Salesforce access_token
- * @domain            Salesforce domain
- *
- * @return      object 
- */
-
-function getSalesForceUser($email, $access_token, $domain){
+function getSalesForceUser($access_token, $email, $domain){
   $url = "https://" . $domain . ".salesforce.com/services/data/v36.0/parameterizedSearch";
 $params = array(
     "q" => $email,
@@ -398,3 +420,4 @@ $result = json_decode($output);
 
 }
 ?>
+
