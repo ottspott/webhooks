@@ -60,11 +60,6 @@ if(!isset($result["dev"])) {
   $client_secret = '3062949387980370332';
   $manager = new MongoDB\Driver\Manager("mongodb://urom99oo9qwydbi:e6kk2h1XfbUHqY2vfcFBbgaksat89ofrvkg@139.59.149.98:27017/ottspott_devel");
   $table_name = "ottspott_devel.users";
-} elseif($result["dev"] == "dev_am") {
-  $client_id = '3MVG9HxRZv05HarRN0RODQsIUrfZLPnr3bZI7QJMNc5J5GYkKKvTdu0bxMrkYsGtB6WbPm3rsavRdXX01pPuO';
-  $client_secret = '1222323082055324236';
-  $manager = new MongoDB\Driver\Manager("mongodb://urom99oo9qwydbi:e6kk2h1XfbUHqY2vfcFBbgaksat89ofrvkg@139.59.149.98:27017/ottspott_devel");
-  $table_name = "ottspott_devel.users";
 }
 
 if($domain && $refresh_token && $salesforce_id) {
