@@ -69,7 +69,7 @@ $gorgias_credentials["requesterName"] = $gorgias_credentials['senderName'];
 $gorgias_credentials["toName"] = $gorgias_credentials['senderName'];
 
 if($obj->event == 'new_outgoing_call' || $obj->event == 'outgoing_call_ended') {
-  $user_details = searchContactByPhone($gorgias_credentials, $obj->destination_number);  
+  $user_details = searchContactByPhone($gorgias_credentials, $obj->destination_number);
   if(isset($user_details)) {
     $gorgias_credentials["requesterEmail"] = $user_details[2];
     $gorgias_credentials["requesterName"] = $user_details[1];
@@ -80,7 +80,6 @@ if($obj->event == 'new_outgoing_call' || $obj->event == 'outgoing_call_ended') {
   if(isset($user_details)){
     $gorgias_credentials["requesterEmail"] = $user_details[2];
     $gorgias_credentials["requesterName"] = $user_details[1];
-   
   }
 }
 
@@ -98,7 +97,12 @@ $call_details_raw_html = "";
 
 switch ($obj->event){
   case "outgoing_call_ended":
-  $subject = "Outgoing call to +" . $obj->destination_number;
+  if($gorgias_credentials["toName"] === "") {
+    $subject = "Outgoing call to +" . $obj->destination_number;
+  } else {
+    $subject = "Outgoing call to " . $gorgias_credentials["toName"] . ' (+' . $obj->destination_number . ')';
+  }
+
   $call_details_raw = "Caller : " . $obj->caller_id_name . " - duration : " . $obj->duration . " seconds";
   $call_details_raw_html = "Caller : <b>" . $obj->caller_id_name . "</b> - duration : " . $obj->duration . " seconds";
   if (property_exists($obj, 'recorded') && $obj->recorded == "true"){
@@ -108,10 +112,10 @@ switch ($obj->event){
   case "incoming_call_ended_and_missed":
   $subject = "Missed call ";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if ($gorgias_credentials["requesterName"] === "") {
     $subject .= " from +" . $obj->caller_id_number;
   } else {
-    $subject .= " from " . $obj->caller_id_name . " (+" . $obj->caller_id_number . ")";
+    $subject .= " from " . $gorgias_credentials["requesterName"] . " (+" . $obj->caller_id_number . ")";
   }
 
   $call_details_raw = "A call has been missed";
@@ -120,11 +124,12 @@ switch ($obj->event){
   case "incoming_call_ended_and_answered":
   $subject = "Incoming call terminated";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if ($gorgias_credentials["requesterName"] === "") {
     $subject .= " from +" . $obj->caller_id_number;
   } else {
-    $subject .= " from " . $obj->caller_id_name . " (+" . $obj->caller_id_number . ")";
+    $subject .= " from " . $gorgias_credentials["requesterName"] . " (+" . $obj->caller_id_number . ")";
   }
+
 
   $call_details_raw = $obj->detailed_status . " - duration : " . $obj->duration . " seconds";
   $call_details_raw_html = $obj->detailed_status . " - duration : " . $obj->duration . " seconds";
@@ -136,10 +141,10 @@ switch ($obj->event){
   case "incoming_call_ended_and_voicemail_left":
   $subject = "Received Voicemail";
 
-  if (!property_exists($obj, 'caller_id_name')) {
+  if ($gorgias_credentials["requesterName"] === "") {
     $subject .= " from +" . $obj->caller_id_number;
   } else {
-    $subject .= " from " . $obj->caller_id_name . " (+" . $obj->caller_id_number . ")";
+    $subject .= " from " . $gorgias_credentials["requesterName"] . " (+" . $obj->caller_id_number . ")";
   }
 
   $call_details_raw = "Voicemail URL " . $obj->voicemail_url . ", duration : " . $obj->voicemail_duration . "s";
@@ -160,7 +165,7 @@ $data = array(
     "email"=> $gorgias_credentials['senderEmail']
     ),
   "requester" => array(
-    "name"=> $gorgias_credentials['requesterName'],
+"name"=> $gorgias_credentials['requesterName'],
     "email"=> $gorgias_credentials['requesterEmail']
     ),
   "receiver" => array(
@@ -186,12 +191,12 @@ $data = array(
         "type" => "ottspott-call",
         "from" => array(
           "name" => "Unknown yet",
-          "address" => $obj->caller_id_number
+          "address" => "+" . $obj->caller_id_number
           ),
         "to" => array(
           array(
             "name" => $gorgias_credentials['toName'],
-            "address" => $obj->destination_number
+            "address" => "+" . $obj->destination_number
             ),
           ),
         ),
@@ -243,8 +248,8 @@ if ($result["http_code"] != "200" && $result["http_code"] != "201"){
 
 sendResponseAndExit($response, $logs);
 
-function searchContactByPhone($gorgias_credentials, $phone){  
-  
+function searchContactByPhone($gorgias_credentials, $phone){
+
   $data = array(
     "type"  => "users_by_phone",
     "query" => "+" . $phone,
@@ -264,29 +269,26 @@ function searchContactByPhone($gorgias_credentials, $phone){
     'Cache-Control: no-cache',
     'Content-Length: ' . strlen($data_string)
     ));
-  
+
 
   $output = curl_exec($ch);
-  $result = curl_getinfo($ch);
-  curl_close($ch);
-  
+$result = curl_getinfo($ch);
+curl_close($ch);
   $obj = json_decode($output, 1);
 
   $logs = "[". $date . " - " . __FILE__ . "] search result from Gorgias :\n";
   $logs .= $output . "\n";
-  $logs .= "[". $date . " - " . __FILE__ . "] HTTP CODE FROM GORGIAS : " . $result["http_code"];
-  if ( $result["http_code"] != "201" && empty($obj['data']) && !isset($obj['data'][0])) {
+$logs .= "[". $date . " - " . __FILE__ . "] HTTP CODE FROM GORGIAS : " . $result["http_code"];
+if ( $result["http_code"] != "201" && empty($obj['data']) && !isset($obj['data'][0])) {
     $logs .= 'Cannot find contact for phone ' . $phone . "\n";
   } else {
-	  $logs .= 'Found user for phone ' . $phone . ' : ' . json_encode($obj['data'][0]['name']) . "\n";
+$logs .= 'Found user for phone ' . $phone . ' : ' . json_encode($obj['data'][0]['name']) . "\n";
   }
 
-
-
-  if ( $result["http_code"] != "201" && empty($obj['data']) && !isset($obj['data'][0])) {
+if ( $result["http_code"] != "201" && empty($obj['data']) && !isset($obj['data'][0])) {
     return NULL;
   }
-  $logs .= "\nRES " . $obj['data'][0]['id'] . " " . $obj['data'][0]['name'] . " " . $obj['data'][0]['email'];
+$logs .= "\nRES " . $obj['data'][0]['id'] . " " . $obj['data'][0]['name'] . " " . $obj['data'][0]['email'];
   $fplogs = fopen('/tmp/webhooks_gorgias.txt', 'a+');
   fwrite($fplogs, $logs);
   fclose($fplogs);
@@ -303,3 +305,4 @@ function sendResponseAndExit($response, $logs){
 }
 
 ?>
+
