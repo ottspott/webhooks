@@ -21,8 +21,6 @@ $zoho_credentials->accessToken = $obj->zoho_oauth_token;
 $zoho_credentials->domain = $obj->zoho_domain;
 
 $logs = "";
-error_log("------");
-error_log("event : ".$obj->event);
 switch($obj->event){
   case "new_incoming_call":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callreceived";
@@ -113,9 +111,6 @@ switch($obj->event){
     );
   break;
 }
-error_log($url);
-error_log($obj->zoho_oauth_token);
-error_log(json_encode($parameters));
 // Encode in JSON
 $data_string = http_build_query($parameters, '', '&');
 
@@ -141,7 +136,6 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 $output = curl_exec($ch);
 $info = curl_getinfo($ch);
 curl_close($ch);
-error_log($output);
 
 // create an array from the data that is sent back from the API
 $result = json_decode($output, 1);
