@@ -24,11 +24,21 @@ $logs = "";
 switch($obj->event){
   case "new_incoming_call":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callreceived";
-    $parameters = array(
-      "callrefid" => $obj->call_uuid,
-      "fromnumber" => $obj->caller_id_number,
-      "tonumber" => $obj->destination_number,
-    );
+    if (property_exists($obj, 'userid')){
+      $parameters = array(
+        "userid" => $obj->userid,
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+      );
+    }
+    else{
+      $parameters = array(
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+      );
+    }
   break;
   case "incoming_call_answered":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callanswered";
@@ -59,14 +69,27 @@ switch($obj->event){
   break;
   case "incoming_call_ended_and_answered":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
-    $parameters = array(
-      "callrefid" => $obj->call_uuid,
-      "fromnumber" => $obj->caller_id_number,
-      "tonumber" => $obj->destination_number,
-      "callstarttime" => prettyDate($obj->answered_at),
-      "direction" => "inbound",
-      "duration" => $obj->duration,
-    );
+    if (property_exists($obj, 'userid')){
+      $parameters = array(
+        "userid" => $obj->userid,
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+        "callstarttime" => prettyDate($obj->answered_at),
+        "direction" => "inbound",
+        "duration" => $obj->duration,
+      );
+    }
+    else {
+      $parameters = array(
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+        "callstarttime" => prettyDate($obj->answered_at),
+        "direction" => "inbound",
+        "duration" => $obj->duration,
+      );
+    }
   break;
   case "new_outgoing_call":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/calldialed";
@@ -94,14 +117,27 @@ switch($obj->event){
   break;
   case "outgoing_call_ended":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
-    $parameters = array(
-      "callrefid" => $obj->call_uuid,
-      "fromnumber" => $obj->caller_id_number,
-      "tonumber" => $obj->destination_number,
-      "callstarttime" => prettyDate($obj->answered_at),
-      "direction" => "outbound",
-      "duration" => $obj->duration,
-    );
+    if (property_exists($obj, 'userid')){
+      $parameters = array(
+        "userid" => $obj->userid,
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+        "callstarttime" => prettyDate($obj->answered_at),
+        "direction" => "outbound",
+        "duration" => $obj->duration,
+      );
+    }
+    else{
+      $parameters = array(
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+        "callstarttime" => prettyDate($obj->answered_at),
+        "direction" => "outbound",
+        "duration" => $obj->duration,
+      );
+    }
   break;
   case "incoming_call_ended_and_voicemail_left":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/voiceurl";
