@@ -98,16 +98,31 @@ if($obj->event === "outgoing_call_ended" || $obj->event === "new_outgoing_call")
 } else  {
   $phone = $obj->caller_id_number;
 }
-$logs .= 'PHONE: ' . $phone . "\n";
+$logs .= "\nPHONE: " . $phone . "\n";
+
 $contact = getSalesforceContact($phone, $access_token, $domain, 'Contact');
+
+if($contact === null){
+  $contact = getSalesforceContact("+".$phone, $access_token, $domain, 'Contact');
+}
+
+if($contact === null){
+  $contact = getSalesforceContact("00".$phone, $access_token, $domain, 'Contact');
+}
   
 if($contact === null) {
-     $lead = getSalesforceContact($phone, $access_token, $domain, 'Lead'); 
-     if($lead === null) {
-       $logs .= "Cannot find Salesforce contact or lead, returning.\n";
-       $success = false;
-       $response['ok'] = false;
-       $response['message'] = "Salesforce contact or lead was not found";
+    $lead = getSalesforceContact($phone, $access_token, $domain, 'Lead');
+    if($lead === null){
+      $lead = getSalesforceContact("+".$phone, $access_token, $domain, 'Lead');
+    }
+    if($lead === null){
+      $lead = getSalesforceContact("00".$phone, $access_token, $domain, 'Lead');
+    }
+    if($lead === null) {
+     $logs .= "Cannot find Salesforce contact or lead, returning.\n";
+     $success = false;
+     $response['ok'] = false;
+     $response['message'] = "Salesforce contact or lead was not found";
     } else {
      $contact_name = " (" . $lead->FirstName . " " . $lead->LastName . ")"; 
      $contact_id =  $lead->Id;
@@ -260,17 +275,17 @@ $logs .= "\n";
 $url = "https://" . $domain . ".salesforce.com/services/data/v21.0/sobjects/Task/";
 $activity_string = json_encode($activity);
 $fplogs = fopen('/tmp/salesforce_create_activity.txt', 'a+');
-  fwrite($fplogs, $activity_string);
-  fclose($fplogs);
+fwrite($fplogs, $activity_string);
+fclose($fplogs);
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $activity_string);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    'Content-Type: application/json',
-            'Accept: application/json',        
-            'Authorization: Bearer ' . $access_token)
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $activity_string);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+  'Content-Type: application/json',
+  'Accept: application/json',
+  'Authorization: Bearer ' . $access_token)
 );
 $output = curl_exec($ch);
 $info = curl_getinfo($ch);
@@ -349,70 +364,67 @@ function duration($seconds_count)
  * @phone       concact phone in international format 
  */
 
-function getSalesforceContact($phone, $access_token, $domain, $name)
-{
+function getSalesforceContact($phone, $access_token, $domain, $name) {
   $url = "https://" . $domain . ".salesforce.com/services/data/v36.0/parameterizedSearch";
-$params = array(
+  $params = array(
     "q" => $phone,
     "fields" => ["id", "firstName", "lastName", "phone"],
-  "sobjects" => [ array("name" => $name)],
+    "sobjects" => [ array("name" => $name)],
     "in" => "ALL"
-);
+  );
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
   curl_setopt($ch, CURLOPT_POST,true);
   curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
   curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-      'Content-Type: application/json',
-      'Accept: application/json',
-      'Authorization: Bearer ' . $access_token
+    'Content-Type: application/json',
+    'Accept: application/json',
+    'Authorization: Bearer ' . $access_token
   ));
 
   $output = curl_exec($ch);
   $info = curl_getinfo($ch);
   curl_close($ch);
 
-$result = json_decode($output);
+  $result = json_decode($output);
 
   if(isset($result[0]->Id)) {
     return  $result[0];
   } else {
     return null;
   }
-
 }
-function getSalesForceUser($access_token, $email, $domain){
+
+function getSalesForceUser($access_token, $email, $domain) {
   $url = "https://" . $domain . ".salesforce.com/services/data/v36.0/parameterizedSearch";
-$params = array(
+  $params = array(
     "q" => $email,
     "fields" => ["id"],
-  "sobjects" => [ array("name" => "User")],
+    "sobjects" => [ array("name" => "User")],
     "in" => "ALL"
-);
+  );
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
   curl_setopt($ch, CURLOPT_POST,true);
   curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
   curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-      'Content-Type: application/json',
-      'Accept: application/json',
-      'Authorization: Bearer ' . $access_token
+    'Content-Type: application/json',
+    'Accept: application/json',
+    'Authorization: Bearer ' . $access_token
   ));
 
   $output = curl_exec($ch);
   $info = curl_getinfo($ch);
   curl_close($ch);
 
-$result = json_decode($output);
+  $result = json_decode($output);
 
   if(isset($result[0]->Id)) {
     return  $result[0]->Id;
   } else {
     return null;
   }
-
 }
 ?>
-
