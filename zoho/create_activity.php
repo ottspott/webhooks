@@ -60,12 +60,23 @@ switch($obj->event){
   break;
   case "incoming_call_ended_and_missed":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callmissed";
-    $parameters = array(
-      "callrefid" => $obj->call_uuid,
-      "fromnumber" => $obj->caller_id_number,
-      "tonumber" => $obj->destination_number,
-      "callmissedtime" => prettyDate($obj->closed_at),
-    );
+    if (property_exists($obj, 'userid')){
+      $parameters = array(
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+        "callmissedtime" => prettyDate($obj->closed_at),
+        "userid" => $obj->userid,
+      );
+    }
+    else {
+      $parameters = array(
+        "callrefid" => $obj->call_uuid,
+        "fromnumber" => $obj->caller_id_number,
+        "tonumber" => $obj->destination_number,
+        "callmissedtime" => prettyDate($obj->closed_at),
+      );
+    }
   break;
   case "incoming_call_ended_and_answered":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
@@ -116,28 +127,52 @@ switch($obj->event){
     }
   break;
   case "outgoing_call_ended":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
-    if (property_exists($obj, 'userid')){
-      $parameters = array(
-        "userid" => $obj->userid,
-        "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
-        "callstarttime" => prettyDate($obj->answered_at),
-        "direction" => "outbound",
-        "duration" => $obj->duration,
-      );
+    if (!property_exists($obj, 'answered_at')){
+      //there was no conversation for some reasons, have to send the customerstatus = busy
+      $url = "https://www.zohoapis.com/crm/v2/phonebridge/calldialed";
+      if (property_exists($obj, 'userid')){
+        $userid = $obj->userid;
+        $parameters = array(
+          "callrefid" => $obj->call_uuid,
+          "fromnumber" => $obj->caller_id_number,
+          "tonumber" => $obj->destination_number,
+          "customerstatus" => "busy",
+          "userid" => $userid,
+        );
+      } else {
+        $parameters = array(
+          "callrefid" => $obj->call_uuid,
+          "fromnumber" => $obj->caller_id_number,
+          "tonumber" => $obj->destination_number,
+          "customerstatus" => "busy",
+        );
+      }
     }
-    else{
-      $parameters = array(
-        "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
-        "callstarttime" => prettyDate($obj->answered_at),
-        "direction" => "outbound",
-        "duration" => $obj->duration,
-      );
-    }
+    else {
+      //outgoing call wasnt missed but was normaly hunged up
+      $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
+      if (property_exists($obj, 'userid')){
+        $parameters = array(
+          "userid" => $obj->userid,
+          "callrefid" => $obj->call_uuid,
+          "fromnumber" => $obj->caller_id_number,
+          "tonumber" => $obj->destination_number,
+          "callstarttime" => prettyDate($obj->answered_at),
+          "direction" => "outbound",
+          "duration" => $obj->duration,
+        );
+      }
+      else{
+        $parameters = array(
+          "callrefid" => $obj->call_uuid,
+          "fromnumber" => $obj->caller_id_number,
+          "tonumber" => $obj->destination_number,
+          "callstarttime" => prettyDate($obj->answered_at),
+          "direction" => "outbound",
+          "duration" => $obj->duration,
+        );
+      }
+  }
   break;
   case "incoming_call_ended_and_voicemail_left":
     $url = "https://www.zohoapis.com/crm/v2/phonebridge/voiceurl";
@@ -146,9 +181,20 @@ switch($obj->event){
       "voiceurl" => $obj->voicemail_url,
     );
   break;
+  if (property_exists($obj, 'orig_call_uuid')){
+    $parameters[$transfercallrefid] = $obj->orig_call_uuid;
+  }
 }
 // Encode in JSON
-$data_string = http_build_query($parameters, '', '&');
+
+// $data_string = http_build_query($parameters, '', '&');
+$data_str = '';
+
+foreach($parameters as $key=>$value) {
+  $data_str .= $key.'='.$value.'&'; 
+}
+
+$data_string = substr_replace($data_str, "", -1);
 
 $datalogs = "";
 $datalogs .= "\n[". $date . "] Encoded parameters are : ";
