@@ -28,15 +28,15 @@ switch($obj->event){
       $parameters = array(
         "userid" => $obj->userid,
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
       );
     }
     else{
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
       );
     }
   break;
@@ -53,8 +53,8 @@ switch($obj->event){
     else {
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
       );
     }
   break;
@@ -63,8 +63,8 @@ switch($obj->event){
     if (property_exists($obj, 'userid')){
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
         "callmissedtime" => prettyDate($obj->closed_at),
         "userid" => $obj->userid,
       );
@@ -72,8 +72,8 @@ switch($obj->event){
     else {
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
         "callmissedtime" => prettyDate($obj->closed_at),
       );
     }
@@ -84,8 +84,8 @@ switch($obj->event){
       $parameters = array(
         "userid" => $obj->userid,
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
         "callstarttime" => prettyDate($obj->answered_at),
         "direction" => "inbound",
         "duration" => $obj->duration,
@@ -94,8 +94,8 @@ switch($obj->event){
     else {
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
         "callstarttime" => prettyDate($obj->answered_at),
         "direction" => "inbound",
         "duration" => $obj->duration,
@@ -111,8 +111,8 @@ switch($obj->event){
       $userid = $obj->userid;
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
         "customerstatus" => $custstatus,
         "userid" => $userid,
       );
@@ -120,8 +120,8 @@ switch($obj->event){
     else{
       $parameters = array(
         "callrefid" => $obj->call_uuid,
-        "fromnumber" => $obj->caller_id_number,
-        "tonumber" => $obj->destination_number,
+        "fromnumber" => "+".$obj->caller_id_number,
+        "tonumber" => "+".$obj->destination_number,
         "customerstatus" => $custstatus,
       );
     }
@@ -134,16 +134,16 @@ switch($obj->event){
         $userid = $obj->userid;
         $parameters = array(
           "callrefid" => $obj->call_uuid,
-          "fromnumber" => $obj->caller_id_number,
-          "tonumber" => $obj->destination_number,
+          "fromnumber" => "+".$obj->caller_id_number,
+          "tonumber" => "+".$obj->destination_number,
           "customerstatus" => "busy",
           "userid" => $userid,
         );
       } else {
         $parameters = array(
           "callrefid" => $obj->call_uuid,
-          "fromnumber" => $obj->caller_id_number,
-          "tonumber" => $obj->destination_number,
+          "fromnumber" => "+".$obj->caller_id_number,
+          "tonumber" => "+".$obj->destination_number,
           "customerstatus" => "busy",
         );
       }
@@ -155,8 +155,8 @@ switch($obj->event){
         $parameters = array(
           "userid" => $obj->userid,
           "callrefid" => $obj->call_uuid,
-          "fromnumber" => $obj->caller_id_number,
-          "tonumber" => $obj->destination_number,
+          "fromnumber" => "+".$obj->caller_id_number,
+          "tonumber" => "+".$obj->destination_number,
           "callstarttime" => prettyDate($obj->answered_at),
           "direction" => "outbound",
           "duration" => $obj->duration,
@@ -165,8 +165,8 @@ switch($obj->event){
       else{
         $parameters = array(
           "callrefid" => $obj->call_uuid,
-          "fromnumber" => $obj->caller_id_number,
-          "tonumber" => $obj->destination_number,
+          "fromnumber" => "+".$obj->caller_id_number,
+          "tonumber" => "+".$obj->destination_number,
           "callstarttime" => prettyDate($obj->answered_at),
           "direction" => "outbound",
           "duration" => $obj->duration,
@@ -181,17 +181,19 @@ switch($obj->event){
       "voiceurl" => $obj->voicemail_url,
     );
   break;
-  if (property_exists($obj, 'orig_call_uuid')){
-    $parameters[$transfercallrefid] = $obj->orig_call_uuid;
-  }
 }
+
+if (property_exists($obj, 'orig_call_uuid')){
+	$parameters['transfercallrefid'] = $obj->orig_call_uuid;
+}
+
+
 // Encode in JSON
 
-// $data_string = http_build_query($parameters, '', '&');
 $data_str = '';
 
 foreach($parameters as $key=>$value) {
-  $data_str .= $key.'='.$value.'&'; 
+  $data_str .= $key.'='.$value.'&';
 }
 
 $data_string = substr_replace($data_str, "", -1);
