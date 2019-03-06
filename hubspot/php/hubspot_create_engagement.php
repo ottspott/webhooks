@@ -287,25 +287,47 @@ function duration($seconds_count)
  *
  * @return      object 
  */
-function getHubspotContact($phone, $hapikey)
-{
+function getHubspotContact($phone, $hapikey) {
   $url = "https://api.hubapi.com/contacts/v1/search/query?q=" . $phone . "&hapikey=" . $hapikey;
-
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
   $output = curl_exec($ch);
   $info = curl_getinfo($ch);
   curl_close($ch);
-
-$result = json_decode($output);
+  $result = json_decode($output);
   if(isset($result->total) && $result->total > 0) {
     return  $result->contacts[0];
   } else {
-    return null;
+    $url = "https://api.hubapi.com/contacts/v1/search/query?q=&property=mobilephone&hapikey=" . $hapikey;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $output = curl_exec($ch);
+    $info = curl_getinfo($ch);
+    curl_close($ch);
+    $result = json_decode($output);
+    if(isset($result->total) && $result->total > 0) {
+      $allContacts = $result->contacts;
+      foreach($allContacts as $contct){
+        if (isset($contct->properties->mobilephone) && $contct->properties->mobilephone->value == $phone){
+          //get the contact info with this vid
+          $vid = $contct->vid;
+          $url = "https://api.hubapi.com/contacts/v1/contact/vid/" . $vid . "/profile?hapikey=" . $hapikey;
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL, $url);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+          $output = curl_exec($ch);
+          $info = curl_getinfo($ch);
+          curl_close($ch);
+          $result = json_decode($output);
+          return $result;
+        }
+      }
+    } else {
+      return null;
+    }
   }
-
 }
 ?>
 
