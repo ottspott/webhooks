@@ -23,7 +23,7 @@ $zoho_credentials->domain = $obj->zoho_domain;
 $logs = "";
 switch($obj->event){
   case "new_incoming_call":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/callreceived";
+    $url = $obj->zoho_domain . "/crm/v2/phonebridge/callreceived";
     if (property_exists($obj, 'userid')){
       $parameters = array(
         "userid" => $obj->userid,
@@ -41,7 +41,7 @@ switch($obj->event){
     }
   break;
   case "incoming_call_answered":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/callanswered";
+    $url = $obj->zoho_domain . "/crm/v2/phonebridge/callanswered";
     if (property_exists($obj, 'userid')){
       $parameters = array(
         "callrefid" => $obj->call_uuid,
@@ -59,7 +59,7 @@ switch($obj->event){
     }
   break;
   case "incoming_call_ended_and_missed":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/callmissed";
+    $url = $obj->zoho_domain . "/crm/v2/phonebridge/callmissed";
     if (property_exists($obj, 'userid')){
       $parameters = array(
         "callrefid" => $obj->call_uuid,
@@ -79,7 +79,7 @@ switch($obj->event){
     }
   break;
   case "incoming_call_ended_and_answered":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
+    $url = $obj->zoho_domain . "/crm/v2/phonebridge/callhungup";
     if (property_exists($obj, 'userid')){
       $parameters = array(
         "userid" => $obj->userid,
@@ -103,7 +103,7 @@ switch($obj->event){
     }
   break;
   case "new_outgoing_call":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/calldialed";
+    $url = $obj->zoho_domain . "/crm/v2/phonebridge/calldialed";
     $custstatus = "inprogress";
     if (property_exists($obj, 'callstatus') && $obj->callstatus == "outcallanswered")
       $custstatus = "success";
@@ -129,7 +129,7 @@ switch($obj->event){
   case "outgoing_call_ended":
     if (!property_exists($obj, 'answered_at')){
       //there was no conversation for some reasons, have to send the customerstatus = busy
-      $url = "https://www.zohoapis.com/crm/v2/phonebridge/calldialed";
+      $url = $obj->zoho_domain . "/crm/v2/phonebridge/calldialed";
       if (property_exists($obj, 'userid')){
         $userid = $obj->userid;
         $parameters = array(
@@ -150,7 +150,7 @@ switch($obj->event){
     }
     else {
       //outgoing call wasnt missed but was normaly hunged up
-      $url = "https://www.zohoapis.com/crm/v2/phonebridge/callhungup";
+      $url = $obj->zoho_domain . "/crm/v2/phonebridge/callhungup";
       if (property_exists($obj, 'userid')){
         $parameters = array(
           "userid" => $obj->userid,
@@ -175,7 +175,7 @@ switch($obj->event){
   }
   break;
   case "incoming_call_ended_and_voicemail_left":
-    $url = "https://www.zohoapis.com/crm/v2/phonebridge/voiceurl";
+    $url = $obj->zoho_domain . "/crm/v2/phonebridge/voiceurl";
     $parameters = array(
       "callrefid" => $obj->call_uuid,
       "voiceurl" => $obj->voicemail_url,
