@@ -179,6 +179,7 @@ $data = array(
       "public" => true,
       "channel" => "phone",
       "via" => "phone",
+      "from_agent" => true,
       "receiver" => array(
         "name"=> $gorgias_credentials['senderName'],
         "email"=> $gorgias_credentials['senderEmail']
@@ -305,4 +306,3 @@ function sendResponseAndExit($response, $logs){
 }
 
 ?>
-
